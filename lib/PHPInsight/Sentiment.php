@@ -27,13 +27,13 @@ class Sentiment {
 
 	/**
 	 * Location of the dictionary files
-	 * @var str 
+	 * @var str
 	 */
 	private $dataFolder = '';
 
 	/**
 	 * List of tokens to ignore
-	 * @var array 
+	 * @var array
 	 */
 	private $ignoreList = array();
 
@@ -45,13 +45,13 @@ class Sentiment {
 
 	/**
 	 * Storage of cached dictionaries
-	 * @var array 
+	 * @var array
 	 */
 	private $dictionary = array();
 
 	/**
 	 * Min length of a token for it to be taken into consideration
-	 * @var int
+	 * @var int 
 	 */
 	private $minTokenLength = 1;
 
@@ -69,7 +69,7 @@ class Sentiment {
 
 	/**
 	 * Token score per class
-	 * @var array 
+	 * @var array
 	 */
 	private $classTokCounts = array(
 		'pos' => 0,
@@ -89,7 +89,7 @@ class Sentiment {
 
 	/**
 	 * Number of tokens in a text
-	 * @var int 
+	 * @var int
 	 */
 	private $tokCount = 0;
 
@@ -129,7 +129,7 @@ class Sentiment {
 	 * @param str $sentence Text to analyze
 	 * @return int Score
 	 */
-	public function score($sentence) {
+	public function score($sentence, $include_words=false) {
 
 		//For each negative prefix in the list
 		foreach ($this->negPrefixList as $negPrefix) {
@@ -150,6 +150,12 @@ class Sentiment {
 		//Empty array for the scores for each of the possible categories
 		$scores = array();
 
+		// Add the option to include the words and how they were scored
+		if($include_words) {
+			$scores['words'] = array();
+			$wordCount = 0;
+		}
+
 		//Loop through all of the different classes set in the $classes variable
 		foreach ($this->classes as $class) {
 
@@ -158,6 +164,13 @@ class Sentiment {
 
 			//For each of the individual words used loop through to see if they match anything in the $dictionary
 			foreach ($tokens as $token) {
+				// Add the option to include the words and how they were scored
+				if($include_words) {
+					if(!isset($scores['words'][$token])) {
+						array_push($scores['words'], array('word' => $token, 'class' => $class));
+						$wordCount++;
+					}
+				}
 
 				//If statement so to ignore tokens which are either too long or too short or in the $ignoreList
 				if (strlen($token) > $this->minTokenLength && strlen($token) < $this->maxTokenLength && !in_array($token, $this->ignoreList)) {
@@ -171,6 +184,20 @@ class Sentiment {
 
 					//Score[class] is calcumeted by $scores[class] x $count +1 divided by the $classTokCounts[class] + $tokCount
 					$scores[$class] *= ($count + 1);
+				} else {
+					if($include_words) {
+						if(strlen($token) < $this->minTokenLength) {
+							$scores['words'][$wordCount]['class'] = 'min';
+						}
+
+						if(strlen($token) > $this->maxTokenLength) {
+							$scores['words'][$wordCount]['class'] = 'max';
+						}
+
+						if(in_array($token, $this->ignoreList)) {
+							$scores['words'][$wordCount]['class'] = 'ign';
+						}
+					}
 				}
 			}
 
@@ -195,13 +222,13 @@ class Sentiment {
 
 	/**
 	 * Get the class of the text based on it's score
-	 * 
+	 *
 	 * @param str $sentence
 	 * @return str pos|neu|neg
 	 */
-	public function categorise($sentence) {
+	public function categorise($sentence, $include_words=false) {
 
-		$scores = $this->score($sentence);
+		$scores = $this->score($sentence, $include_words);
 
 		//Classification is the key to the scores array
 		$classification = key($scores);
@@ -364,7 +391,7 @@ class Sentiment {
 
 	/**
 	 * Function to clean a string so all characters with accents are turned into ASCII characters. EG: ‡ = a
-	 * 
+	 *
 	 * @param str $string
 	 * @return str
 	 */
