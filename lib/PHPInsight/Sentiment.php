@@ -419,7 +419,9 @@ class Sentiment {
 	 * @return str
 	 */
 	private function _cleanString($string) {
-
+		// Catch the em dash character and replace it with a simple dash
+		$string = str_replace('—', '-', $string);
+		
 		$diac =
 				/* A */ chr(192) . chr(193) . chr(194) . chr(195) . chr(196) . chr(197) .
 				/* a */ chr(224) . chr(225) . chr(226) . chr(227) . chr(228) . chr(229) .
