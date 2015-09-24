@@ -174,38 +174,51 @@ class Sentiment {
 
 			//For each of the individual words used loop through to see if they match anything in the $dictionary
 			foreach ($tokens as $token) {
-				// Add the option to include the words and how they were scored
-				if($include_words) {
-					if(!isset($scores['words'][$token])) {
-						array_push($scores['words'], array('word' => $token, 'class' => $class));
-						$wordCount++;
-					}
-				}
-
 				//If statement so to ignore tokens which are either too long or too short or in the $ignoreList
-				if (strlen($token) > $this->minTokenLength && strlen($token) < $this->maxTokenLength && !in_array($token, $this->ignoreList)) {
+				if (strlen($token) >= $this->minTokenLength && strlen($token) < $this->maxTokenLength && !in_array($token, $this->ignoreList)) {
 					//If dictionary[token][class] is set
 					if (isset($this->dictionary[$token][$class])) {
 						//Set count equal to it
 						$count = $this->dictionary[$token][$class];
+
+						// Add the option to include the words and how they were scored
+						if($include_words) {
+							if(!isset($scores['words'][$token])) {
+								$scores['words'][$token] = array('count' => $count, 'class' => $class);
+								$wordCount++;
+							}
+						}
 					} else {
 						$count = 0;
+
+						// Add the option to include the words and how they were scored
+						if($include_words) {
+							if(!isset($scores['words'][$token])) {
+								$scores['words'][$token] = array('count' => $count, 'class' => 'unk');
+								$wordCount++;
+							}
+						}
 					}
 
 					//Score[class] is calcumeted by $scores[class] x $count +1 divided by the $classTokCounts[class] + $tokCount
 					$scores[$class] *= ($count + 1);
 				} else {
 					if($include_words) {
-						if(strlen($token) < $this->minTokenLength) {
-							$scores['words'][$wordCount]['class'] = 'min';
-						}
+						if(!isset($scores['words'][$token])) {
+							$scores['words'][$token] = array('count' => 0, 'class' => 'und');
+							if(strlen($token) < $this->minTokenLength) {
+								$scores['words'][$token] = array('count' => 0, 'class' => 'min');
+							}
 
-						if(strlen($token) > $this->maxTokenLength) {
-							$scores['words'][$wordCount]['class'] = 'max';
-						}
+							if(strlen($token) > $this->maxTokenLength) {
+								$scores['words'][$token] = array('count' => 0, 'class' => 'max');
+							}
 
-						if(in_array($token, $this->ignoreList)) {
-							$scores['words'][$wordCount]['class'] = 'ign';
+							if(in_array($token, $this->ignoreList)) {
+								$scores['words'][$token] = array('count' => 0, 'class' => 'ign');
+							}
+
+							$wordCount++;
 						}
 					}
 				}
