@@ -51,7 +51,7 @@ class Sentiment {
 
 	/**
 	 * Min length of a token for it to be taken into consideration
-	 * @var int 
+	 * @var int
 	 */
 	private $minTokenLength = 1;
 
@@ -114,7 +114,17 @@ class Sentiment {
 	 * @param str $dataFolder base folder
 	 * Sets defaults and loads/caches dictionaries
 	 */
-	public function __construct($dataFolder = false) {
+	public function __construct($dataFolder = false, $min = null, $max = null) {
+
+		// Add the ability to set the min/max on instantiation of the class
+		if(isset($min)) {
+			$this->minTokenLength = $min;
+		}
+
+		// Add the ability to set the min/max on instantiation of the class
+		if(isset($max)) {
+			$this->maxTokenLength = $max;
+		}
 
 		//set the base folder for the data models
 		$this->setDataFolder($dataFolder);
