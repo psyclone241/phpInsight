@@ -134,6 +134,22 @@ class Sentiment {
 	}
 
 	/**
+	* Log actions to a file on the server
+	* @param str $message Text to log
+	* @return boolean true/false if log was successful
+	*/
+	private function logEntry($message) {
+		try {
+			$working_directory = getcwd();
+			file_put_contents($working_directory . '/logs/all.log', $message . "\n");
+			return true;
+		} catch(Exception $e) {
+			throw new Exception($e->getMessage());
+			return $e->getMessage();
+		}
+	}
+
+	/**
 	 * Get scores for each class
 	 *
 	 * @param str $sentence Text to analyze
@@ -174,8 +190,10 @@ class Sentiment {
 
 			//For each of the individual words used loop through to see if they match anything in the $dictionary
 			foreach ($tokens as $token) {
+				$this->logEntry('score: ' . $token);
+
 				//If statement so to ignore tokens which are either too long or too short or in the $ignoreList
-				if (strlen($token) >= $this->minTokenLength && strlen($token) < $this->maxTokenLength && !in_array($token, $this->ignoreList)) {
+				if (strlen($token) >= $this->minTokenLength && strlen($token) <= $this->maxTokenLength && !in_array($token, $this->ignoreList)) {
 					//If dictionary[token][class] is set
 					if (isset($this->dictionary[$token][$class])) {
 						//Set count equal to it
@@ -390,7 +408,6 @@ class Sentiment {
 		$wordList = array();
 
 		$fn = "{$this->dataFolder}data.{$type}.php";
-		;
 		if (file_exists($fn)) {
 			$temp = file_get_contents($fn);
 			$words = unserialize($temp);
@@ -407,6 +424,7 @@ class Sentiment {
 
 			//Push results into $wordList array
 			array_push($wordList, $trimmed);
+			$this->logEntry('getList: ' . $trimmed);
 		}
 		//Return $wordList
 		return $wordList;
@@ -421,7 +439,7 @@ class Sentiment {
 	private function _cleanString($string) {
 		// Catch the em dash character and replace it with a simple dash
 		$string = str_replace('—', '-', $string);
-		
+
 		$diac =
 				/* A */ chr(192) . chr(193) . chr(194) . chr(195) . chr(196) . chr(197) .
 				/* a */ chr(224) . chr(225) . chr(226) . chr(227) . chr(228) . chr(229) .
